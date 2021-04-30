@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import Board from './Components/Board';
 import History from './Components/History';
 import Message from './Components/Message';
@@ -17,22 +18,42 @@ const App = () => {
     if (current.first[position] || winner) {
       return;
     }
+    const Lastmove = currentMove + 1 === history.length;
 
     sethistory(prev => {
-      const last = prev[prev.length - 1];
+      const last = Lastmove ? prev[prev.length - 1] : prev[currentMove];
       const newFirst = last.first.map((square, pos) => {
         if (pos === position) {
           return last.next ? 'X' : 'O';
         }
         return square;
       });
-      return prev.concat({ first: newFirst, next: !last.next });
+      const currentHistory = Lastmove
+        ? prev
+        : prev.slice(0, prev.indexOf(last) + 1);
+      return currentHistory.concat({ first: newFirst, next: !last.next });
     });
     setcurrentMove(prev => prev + 1);
   };
   const moveTo = move => {
     setcurrentMove(move);
   };
+
+  const Undo = () => {
+    if (currentMove !== 0) {
+      return setcurrentMove(prev => prev - 1);
+    }
+    return null;
+  };
+
+  const Redo = () => {
+    if (currentMove + 1 === history.length) {
+      //  if (currentMove >= 0 && currentMove !== 0) {
+      return;
+    }
+    setcurrentMove(prev => prev + 1);
+  };
+
   const onNewGame = () => {
     sethistory(NewGame);
     setcurrentMove(0);
@@ -54,13 +75,27 @@ const App = () => {
       />
       <br />
       <Message winner={winner} current={current} />
-      <button
-        type="button"
-        onClick={onNewGame}
-        className={`btn-reset ${winner ? 'active' : ''}`}
-      >
-        Start New Game
-      </button>
+      <div>
+        <button type="button" onClick={Undo} className="btn">
+          Undo
+        </button>
+        <button
+          type="button"
+          onClick={onNewGame}
+          className={`btn-reset ${winner ? 'active' : ''}`}
+        >
+          Start New Game
+        </button>
+
+        <button
+          type="button"
+          onClick={Redo}
+          disabled={currentMove + 1 === history.length}
+          className="btn"
+        >
+          Redo
+        </button>
+      </div>
       <h5 className="gamehis">Current Game History</h5>
       <h3>
         <History history={history} moveTo={moveTo} currentMove={currentMove} />
